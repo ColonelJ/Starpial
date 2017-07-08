@@ -43,14 +43,14 @@
    @nexthand:#?twopair#?trips
    @nexthand:#?pair#?twopair
    @nexthand:#?hicard#?pair
-   !_=_:#a?hand #b?hand [a b sametype a b ap2[.kickers]=]`[false]#
+   !_=_:#a?hand #b?hand [a b sametype a b apply2[.kickers]=]`[false]#
    !_<_: #a?hand #b?hand
-       [a b sametype a b ap2[.kickers] <]
+       [a b sametype a b apply2[.kickers] <]
        `[a b nexthand true]
        `[`@m?hand a m nexthand m b <]
        `[false]#
    !_>_: #a?hand #b?hand
-       [a b sametype a b ap2[.kickers] >]
+       [a b sametype a b apply2[.kickers] >]
        `[b a nexthand true]
        `[`@m?hand m a nexthand m c >]
        `[false]#
