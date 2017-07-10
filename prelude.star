@@ -236,7 +236,6 @@
 @dtoa[countabove] @countabove?[~t t => {t*}]:#a#b a countdown b above
 @iota?[#n?uint => {uint*n}]:     #n count(0) below(n)
 
-
 @box?[~t => {t$}]:#v {v$}
 @unbox?[~{t} => t]:#{v} v
 @array?[`@t {t*} => {t$*}]:#vs {vs each:$}
@@ -252,6 +251,14 @@
 @string?[#n?uint ~t => {t*n}]:  #n#c {n times: c}
 @step?[~{ts..} #n?uint => ts n step]:              {#l\{x _..}#n x [(l n leave) n step..]`[]#}`{#_#_}#
 @chunk?[~{ts..} #n?uint => ts chunk(n)]:          {#l?(length n >)#n l splitat(n) chunk(n)..}`{#l#_ l}#
+
+?\ Bottom-up merge sort
+@sort?[`?t?comp {t*} => {t*}]: sortwith[>]
+@sortby?[{t*} ~[t => _?comp] => {t*}]:#f sortwith[apply2(f) >]
+@sortwith?[{t*} [t t => bool] => {t*}]:#gt map[solo] while[dup length 1 >][merge_pairs] map[..]
+    @merge_pairs:{#{x y r..} merge(x,y) merge_pairs(r)..}`{#{x} x}`{#_}#
+    @merge:{#{x xs..}#{y ys..} y gt(x)# [x merge(xs, {y ys..})] [y merge({x xs..}, ys)] ?#}
+          `[#{}#ys ys]`[#xs#_ xs]#
 
 @sum?[`@t [t t +]!?t {t+} => t]:              reduce[+]    ?\0 fold[+]
 @length?[~{_..} => uint]:              map[#_ 1u] 0u fold[+]
