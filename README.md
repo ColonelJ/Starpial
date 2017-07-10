@@ -3,11 +3,11 @@
 Starpial is a stack-oriented (concatenative) functional logic programming language with object-oriented programming, recursive regular expressions, dependent types, refinement types and automatic parallelization based on transactions.
 
 ## Fundamentals
-The primary data type in Starpial is the stack, represented by `{}`.  After a `{` you start performing computations from the new empty stack, and when `}` is reached everything on this stack is enclosed in a stack object.  You can also export fields from within the `{}` using `>identifier` and access them from outside using `.identifier`.  The other fundamental data types in Starpial are booleans, signed/unsigned integers (of any bit width), IEEE754 floating-point numbers of any supported bit width, and UTF-8 octets (representing Unicode strings when bound together in a stack).
+The primary data type in Starpial is the stack, represented by `{}`.  After a `{` you start performing computations from the new empty stack, and when `}` is reached everything on this stack is enclosed in a stack object.  You can also export fields from within the `{}` using `>identifier` and access them from outside using `.identifier`.  Alternatively, for dynamic or non-string keys you can use `>(expression)` and `.(expression)`.  The other fundamental data types in Starpial are booleans, signed/unsigned integers (of any bit width), IEEE754 floating-point numbers of any supported bit width, and UTF-8 octets (representing Unicode strings when bound together in a stack).
 
 There is a special 'spill' operator for stack objects written as `..` that has the effect of emptying the contents of the stack object into the current stack.  Note that this may spill anywhere from zero to infinitely many objects since the evaluation of stacks is done lazily if possible.
 
-Functions are first class in Starpial and are represented by quotations, written as `[]` containing the code to be executed; this is done using the 'apply' operator `#`.  Instead of writing `[]` you can simply write `:` and everything that follows is included in the quotation, plus any code on the following lines, provided it is indented more than the (extended) line the `:` itself occupies, and there is no `;`, which ends the quotation.  Any `#identifier` included at the beginning of a quotation represent local parameters which are immediately taken off the stack in reading order at the moment the quotation is applied.
+Functions are first class in Starpial and are represented by quotations, written as `[]` containing the code to be executed; this is done using the 'apply' operator `#`.  Instead of writing `[]` you can simply write `:` and everything that follows is included in the quotation, plus any code on the following lines, provided it is indented more than the (extended) line the `:` itself occupies, and there is no `;`, which ends the quotation.  Any `#identifier` included at the beginning of a quotation represent local parameters which are immediately taken off the stack in reading order at the moment the quotation is applied.  Normal parameters are bound by value (forcing variables to be read) but you can also bind by reference using `#$identifier` which creates an alias to the variable it binds to.
 
 A quotation or value can be assigned to a name using `@identifier` (or `!identifier`) and then when you use the word `identifier` the quotation is automatically applied (this is not the case for `#parameters` or `$variables` where you have to use `#` explicitly).  With `$variables` you can reassign the value using `variable =[value]` or more commonly the equivalent `variable =: value`.  If you use e.g. `!identifier` multiple times within the same scope, then it does not overwrite the value, it creates an alternative to it, i.e. when you use `identifier` it will result in a non-deterministic value, useful for logical programming.  The difference between `!identifier` and `@identifier` is that the `@` form is considered final so any following definitions are not able to recursively refer to previous ones, hence normally you will have a chain of `!` bindings followed by a `@` one to complete the definition.
 
@@ -158,7 +158,7 @@ All of these operators can be overloaded by the user for types of their own maki
 * `|~` - NOR
 * `&` - AND
 * `&~` - NAND
-* `<>` - EQU
+* `<>` - IFF
 * `><` - XOR
 * `->` - implies
 * `<-` - implied by
@@ -171,7 +171,7 @@ All of these operators can be overloaded by the user for types of their own maki
 * `<<|` - left rotate
 * `|>>` - right rotate
 ### User defined operators
-The operators above can be overloaded by using the `_` delimited form of the operator e.g. `_+_` and doing normal bindings with them.  However, the user is not limited to those above and can define an operator out of any combination of symbols, however this excludes the characters `.`, `,`, `;`, `:`, <code>&#96;</code>, `'`, `"`, and of course bracket symbols and `_`.  Due to special parsing rules for conciseness, it is not permitted to have `#` in your operator except as the last character since it terminates an operator character sequence when they are strung together, and by convention it is only used for operators which call a quotation (sometimes conditionally).
+The operators above can be overloaded by using the `_` delimited form of the operator e.g. `_+_` and doing normal bindings with them.  However, the user is not limited to those above and can define an operator out of any combination of symbols, however this excludes the characters `,`, `;`, `:`, `'`, `"`, and of course bracket symbols and `_`.  Due to special parsing rules for conciseness, it is not permitted to have `#` in your operator except as the last character since it terminates an operator character sequence when they are strung together, and by convention it is only used for operators which call a quotation (sometimes conditionally).
 
 The user is not able to overload any of the operators listed in the following section or anything else that has a language defined meaning.
 
@@ -210,10 +210,14 @@ Prefixing some selected operators onto identifiers (made up of alphanumerics and
 * `@identifier` - final binding
 * `!identifier` - continued binding
 * `$identifier` - variable binding
+* `$$identifier` - reference alias binding
 * `#identifier` - (dependent) parameter binding
+* `#$identifier` - paramater bound by reference (creates an alias)
 * `~identifier` - type binding
 * `<identifier` - import binding
 * `>identifier` - export binding
+* `>!identifier` - unexport and make private binding
+* `>@identifier` - unexport and make protected binding
 * `.identifier` - access field of stack object
 * `?identifier` - check value matches type tag
 * `*?identifier` - Kleene operator (up to the value of identifier times some object)
@@ -221,7 +225,8 @@ Prefixing some selected operators onto identifiers (made up of alphanumerics and
 * `+identifier` - Kleene operator (at least value of identifier times some object)
 * `=identifier` - assign to the variable `$identifier`
 * `-identifier` - negate value of identifier i.e. `identifier -~`
-* `\identifier` - quote identifier shorthand i.e. equivalent to `[identifier]`
+* `\identifier` - get value without calling i.e. equivalent to `[identifier]` for quotations
+* `.\identifier` - get value of field without calling
 * <code>&#96;identifier</code> - assigns handler for exception named `identifier`
 * `|identifier` - creates alternation with value of identifier
 * `&identifier` - take address of object identifier refers to
@@ -239,13 +244,20 @@ Since the prefixing rule does not work with operators (that would turn postfix i
 * `#[]` - matches against any value produced within the stack e.g. you can match ASCII characters with `#['abcABC']`
 * `#()` - match against the value of an expression
 * `#{}` - match against a stack pattern
+* `#$()` - match a reference to a reference computed by the expression
+* `#${}` - match to elements of a stack pattern by reference
 * `~()` - match against the type computed by the expression
 * `~{}` - match against a type stack pattern
 * `<[]` - index into a stack object some number of objects from the top (and repeat for each index given)
 * `>[]` - index into a stack object some number of objects from the bottom (and repeat for each index given)
-* `>()` - exporting bind matching against the value of an expression
+* `>()` - exporting bind to key computed by expression (bind is not available locally)
 * `>{}` - exporting bind matching against a stack pattern
+* `>!()` - unexport key computed by expression
+* `>!{}` - unexport anything bound within stack pattern as private binding
+* `>@()` - same as `>!()`
+* `>@{}` - unexport anything bound within stack pattern as protected binding
 * `.[]` - equivalent to `>[]` indexing into a stack
+* `.()` - access field of stack object by key expression
 * `?[]` - type quotation that produces a type
 * `?()` - assertion on a value
 * `?{}` - type stack
@@ -258,6 +270,7 @@ Since the prefixing rule does not work with operators (that would turn postfix i
 * `\[]` - double quotation (you have to call it twice), these can be stacked up like `\\\[]` as a shorthand for `[[[[]]]]`
 * `\()` - reserved for in patterns, something as matching the expression
 * `\{}` - reserved for in patterns, something as matching the stack pattern
+* `.\()` - access field of stack object by key expression, without calling it
 * <code>&#96;[]</code> - match exception handler
 * <code>&#96;()</code> - match exception handler using replacement expression
 * <code>&#96;{}</code> - match exception handler using stack object or stack object quotation shorthand

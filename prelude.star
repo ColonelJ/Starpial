@@ -203,8 +203,8 @@
 @spreadr?[@ts{t*} ts ~f\[t t =>$ t] =>$[f] ts]:       {#{xs.. x}#f scanr(xs x f).. x}`{#_#_}#
 @find?[{t*} ~f\[t =>$ bool] =>`$[f] t]: #{x xs..}#p if(x p#)[x] else: xs p find
 @findr?[{t*} ~f\[t =>$ bool] =>`$[f] t]:#{xs.. x}#p if(x p#)[x] else: xs p findr
-@findmatch?[{t*} ~f\[t =>`] =>` t]:#m find: m applicable nip
-@findmatchr?[{t*} ~f\[t =>`] =>` t]:#m findr: m applicable nip
+@findmatch?[{t*} ~f\[t =>`] =>` t]:#m find: m applies nip
+@findmatchr?[{t*} ~f\[t =>`] =>` t]:#m findr: m applies nip
 @locate?[{t*} ~f\[t =>$ bool] =>`$[f] uint]: 0 locate_i
 !locate_i: #{x xs..}#p#n?int if(x p#)[n] else: xs p n 1 + locate_i
 @locater?[{t*} ~\f[t =>$ bool] =>`$[f] uint]: over length locater_i
@@ -218,7 +218,7 @@
 
 @unify?[~t t =>`]: #x #x 
 @applied?[xs.. ~t\[xs.. =>` ys..] => [xs..]|[ys..]# bool]:#f [f# true]`_[false]#
-@applicable?[xs.. ~t\[xs.. =>` ys..] => xs.. bool]:#f [failneg[f#] false]`[true]#
+@applies?[xs.. ~t\[xs.. =>` ys..] => xs.. bool]:#f [failneg[f#] false]`[true]#
 @failneg?[xs.. ~t\[xs.. =>` ys..] =>` xs..]:#f @`pass @`fail [f`_[#`fail]# #`pass]`fail[]`pass[#`]#
 @proveifthen?[xs.. ~a\[xs.. =>` ys..] ~c\[ys.. =>` zs..] =>` xs..]: #a #c failneg[a# failneg[c#]]
 @proveiff?[`@xs xs.. [xs.. =>` xs..]*2 =>` xs..]: #f #g proveifthen(f,g) proveifthen(g,f)
@@ -291,7 +291,15 @@
 @choose?[`@t {t*} => t]:    #{_.. x _..} x
 @merge?[`@t {{t*}*} => {t*}]: {#{ps.. {x xs..} qs..} x, merge{ps.., xs, qs..}..}`{#_}#
 
+@_.*_?[`@n {t*n} {t*n} => t]: zipwith[*] sum
+
 @assert?[xs.. ~f\[xs.. =>$ ys.. bool] =>`$[f] ys..]: # !?()
 
 @consecutive?[`@t {t*} #n?uint => {{t*n}*}]: [#l#n n iota map[#k l k leave] zip]`{#_#_}#
 
+@dictadd?[~d #k ~v => d dictadd(k,v)]:#d#k#v {d<*> v>(k)}
+@dictget?[~d #k => d dictget(k)]:#k .\(k)
+@dicthas?[~d `? => bool]:#d#k [d.\(k)] applies
+@dictremove?[~d #k => d dictremove(k)]:#d#k {d<*> {}>!(k)}
+@dictkeys?[~d => dictkeys(d) map[`?t #?t t]]:#d findall[`@k d.\(k) k]
+@dictvalues?[~d => dictvalues(d)]:#d findall[`@k d.\(k)]
