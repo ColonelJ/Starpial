@@ -31,6 +31,8 @@
 !_~>_: -> ~
 !_<-_: <~ ~
 
+!show: .show
+
 @_-~=_:#$a a =: a-~
 @_++=_:#$a a =: a++
 @_--=_:#$a a =: a--
@@ -52,9 +54,10 @@
 ??comp?([#x (x x =)!?bool (x x <)!?bool (x x >)!?bool true]`[#_ false]#)
 
 
-@_=_?[_ _ => bool]:[#{x xs..}#{y ys..} x y = xs ys = &]`[#{}#{} true]`[#_#_ false]#
-@_>_?[_ _ => bool]:[#{x xs..}#{y ys..} x y > (x y = xs ys > &) |]`[#{}#_ false]`[#_#_ true]#
-@_<_?[_ _ => bool]:#a#b b a >
+!_=_?[_ _ => bool]:[#{x xs..}#{y ys..} x y = xs ys = &]`[#{}#{} true]`[#_#_ false]#
+!_>_?[_ _ => bool]:[#{x xs..}#{y ys..} x y > (x y = xs ys > &) |]`[#{}#_ false]`[#_#_ true]#
+!_<_?[_ _ => bool]:#a#b b a >
+!show?[_ => //]:{#{x xs..} '{' show(x).. xs each[',' swap show..] '}'}`{#_ '{}'}
 
 
 ??maybe?@none?{#_}?@some?{#t t} @None:{}?![none(`?)]; @Some:`?t #x?t {x}?![some(t)]
@@ -270,7 +273,7 @@
 @max?[`@t [t t >]!?bool {t+} => t]:              best[>]
 @min?[`@t [t t <]!?bool {t+} => t]:              best[<]
 @cat?[`@t {{t*}*} => {t*}]:              map[..]
-@showcat?[`@t [t.show]!?// {t*} => //]:        map[.show..]
+@showcat?[`@t [t show]!?// {t*} => //]:        map[show..]
 @catlines?[{//*} => //]:           map[.. '\n']
 @take?[~{ts..} #n?uint => ts take(n)]:         #n n 0 > {#{x xs..} x xs n 1 - take..} {#_} ?#
 @leave?[~{ts..} #n?uint => ts leave(n)]:           times[tail]
