@@ -9,7 +9,7 @@ There is a special 'spill' operator for stack objects written as `..` that has t
 
 Functions are first class in Starpial and are represented by quotations, written as `[]` containing the code to be executed; this is done using the 'apply' operator `#`.  Instead of writing `[]` you can simply write `:` and everything that follows is included in the quotation, plus any code on the following lines, provided it is indented more than the (extended) line the `:` itself occupies, and there is no `;`, which ends the quotation.  Any `#identifier` included at the beginning of a quotation represent local parameters which are immediately taken off the stack in reading order at the moment the quotation is applied.  Normal parameters are bound by value (forcing variables to be read) but you can also bind by reference using `#$identifier` which creates an alias to the variable it binds to.
 
-A quotation or value can be assigned to a name using `@identifier` (or `!identifier`) and then when you use the word `identifier` the quotation is automatically applied (this is not the case for `#parameters` or `$variables` where you have to use `#` explicitly).  With `$variables` you can reassign the value using `variable =[value]` or more commonly the equivalent `variable =: value`.  If you use e.g. `!identifier` multiple times within the same scope, then it does not overwrite the value, it creates an alternative to it, i.e. when you use `identifier` it will result in a non-deterministic value, useful for logical programming.  The difference between `!identifier` and `@identifier` is that the `@` form is considered final so any following definitions are not able to recursively refer to previous ones, hence normally you will have a chain of `!` bindings followed by a `@` one to complete the definition.
+A quotation or value can be assigned to a name using `@identifier` (or `!identifier`) and then when you use the word `identifier` the quotation is automatically applied (this is not the case for `#parameters` or `$variables` where you have to use `#` explicitly).  (If you want to force it not to be applied in any case you can use `\identifier` instead).  With `$variables` you can reassign the value using either `=variable` or `variable =[value]` or more commonly the equivalent `variable =: value`.  If you use e.g. `!identifier` multiple times within the same scope, then it does not overwrite the value, it creates an alternative to it, i.e. when you use `identifier` it may on backtracking try one of the later options, useful for logical programming.  The difference between `!identifier` and `@identifier` is that the `@` form is considered final so any following definitions are not able to recursively refer to previous ones, hence normally you will have a chain of `!` bindings followed by a `@` one to complete the definition.
 
 Since Starpial is concatenative, all functions and operators are postfix, meaning there is no operator precedence to worry about.  Parentheses therefore have a special purpose, which is to assert that everything within `()` has the effect of adding one item to the stack - this makes the code much easier to read.  You can also use `::` instead of parentheses, which follows the same indentation rules as `:` does for `[]`.  To assert multiple values adding to the stack you can simply separate them by commas as in `(1,2,3)` and a trailing comma is allowed but not necessary (these comma assertions are also usable within stacks but needs the trailing comma to be fully equivalent as in `{1,2,3,}`).  A completely empty `()` does not do anything, `( ;)` asserts that zero items are added to the stack since the last comma and `( ;;)` does not assert anything for after the last comma.  Finally there are special forms of the `..` operator described above, `..,` and `...` which are expressly permitted to add an unknown number of items to the stack, the `..,` allows you to carry on using `,` afterwards, and `...` is useful at the end just before `)`.
 
@@ -24,7 +24,7 @@ Within a pattern, you have use of the Kleene operators `*` (zero or more) `+` (o
 
 For character strings you can use `#//` which is a regular expression matcher.  If it is empty for example, it will match any (valid) string.  Starpial uses its own unique syntax for regular expressions which is described in a later section.
 
-When a pattern doesn't match it triggers a 'match exception', a special soft exception that can be handled using <code>&#96;[]</code> and also triggers backtracking when doing logic programming (with any exception the state of the stack is rolled back to the point a different alternate execution path can be tried).  (Since the <code>&#96;[]</code> form implies a logical cut on the quotation it applies to you may sometimes prefer `|[]` which creates full logical alternatives providing more places to backtrack to.)  You can therefore create a case switch with code like <code>[#1 code]&#96;[#2 code]&#96;[#3 code]#</code>.
+When a pattern doesn't match it triggers a 'match exception', a special soft exception that can be handled using <code>&#96;[]</code> and also triggers backtracking when doing logic programming (with any exception the state of the stack is rolled back to the point a different alternate execution path can be tried).  (Since the <code>&#96;[]</code> form implies a (soft) logical cut on the quotation it applies to you may sometimes prefer `|[]` which creates full logical alternatives providing more places to backtrack to.  There is also `![]` which is a hard cut, disabling all backtracking into the quotation it is applied to.)  You can therefore create a case switch with code like <code>[#1 code]&#96;[#2 code]&#96;[#3 code]#</code>.
 
 You are not limited to using `#{pattern}`, you can also bind patterns using `@{pattern}` `!{pattern}` and `${pattern}`.
 
@@ -44,7 +44,7 @@ To support object oriented programming beyond the simple exported fields describ
 The important thing though is when you do `<*>`.  This imports everything from an object and then exports it again, but on top of that, it also copies any closed type tags (see next section) onto the active stack, essentially making it into a subtype, and furthermore anything defined using `@` within the object is imported along with any variables that aren't marked as private i.e. `!$` or `$!`.  So this is essentially object inheritance.  You are able to override anything imported/exported by simply defining it again (e.g. defining as `@` will unexport something that was exported) but in doing so you will lose access to the original definition, for which you'll have to go back to the original object.  Inheritance can be performed on multiple objects and if exported things share the same name a method resolution order will be used which descends the object hierarchy from the first object that defines it and then down any subtypes which occur.  Due to the inheriting of the type tag the derived object must satisfy all the constraints placed on that type tag, and for this reason placing an interface on your classes is almost mandatory to make them useful considering that subtyping may occur.
 
 ## Assertions and type tags
-Assertions are very similar to pattern matching but instead involve a predicate.  These are written `?()` where inside you have the top item of the stack copied into a new temporary stack and you have to manipulate this stack until there is only a boolean value left on it, if true the assertion passes, if false it generates a 'match exception'.  For example, `?(2% 0=)` asserts that an integer is even.  These can be combined with bindings to form refinement types e.g. `$even_number?(2% 0=)` is a variable that only ever hold an even value.  Note that you can write `!?(assertion)` to assert something about a value and **not** leave it on the stack.  Additionally for booleans already on the stack you can see that `?()` and `!?()` would both be valid and so a special operator `!?` is defined as a shorthand for `!?()` i.e. it turns `false` into logical failure and doesn't leave true on the stack if this test succeeds.
+Assertions are very similar to pattern matching but instead involve a predicate.  These are written `?()` where inside you have the top item of the stack copied into a new temporary stack and you have to manipulate this stack until there is only a boolean value left on it, if true the assertion passes, if false it generates a 'match exception'.  For example, `?(2% 0=)` asserts that an integer is even.  These can be combined with bindings to form refinement types e.g. `$even_number?(2% 0=)` is a variable that only ever hold an even value.  Note that you can write `!?(assertion)` to assert something about a value and **not** leave it on the stack.  Additionally for booleans already on the stack you can see that `?()` and `!?()` would both be valid i.e. it turns `false` into logical failure and in the latter case doesn't leave true on the stack if this test succeeds.
 
 Type tags refer to identifiers associated with types.  Some type tags are closed (only derived from a certain point of definition in the code) and others are open, simply referring to sets of possible values or a set pattern.  Either way writing `?type_tag` asserts that a value has that type tag, and again these may be combined with binding constructs to limit identifiers to certain types.  Intrinsically defined type tags include `bool`, `int`, `uint`, `float`, `double`, `char`, `uint16`, `int64`, `bigint` (unlimited precision signed integers), `nat` (unlimited precision unsigned integers) and the special type tag `_`, which refers to any stack object that does not have any *closed* type tag associated with it (useful to define generic operations on plain data without affecting more advanced types).  There are also higher level type tags including `set` the type of program types (sets of values), `prop` the type of propositions (for impredicative logic, not represented in the running program) and `type` (the type of all types).
 
@@ -59,9 +59,9 @@ For most of the fundamental type tags you should use the built-in type tags desc
 
 To represent the interface of an object/class you simply create a type stack and export from it the same names as the object you're trying to represent, but instead of what was originally exported, you export the values of the types which represent those exported things.
 
-To represent the type of a quotation there is a special object called a stack effect, represented as `[ => ]`.  Everything to the left of the arrow must represent the state of the stack prior to calling the quotation, and everything to the right represents the state after the quotation has completed.  Any parts of the stack underneath what the quotation touches may be left out, but if it is used it should be included, or must if it is modified.  For example <code>[+]?[&#96;?t t t => t]</code> shows a reasonable type judgement for the addition operator.  To make things shorter you can write `~identifier` to represent a named type parameter as one of the inputs so e.g. `[+]?[~t t => t]` works fine.  On top of this you can use `#identifier` to represent dependent parameters so an example type might be `[~t #n => {t*n}]` for a quotation that replicates a value of type t n times into a stack object.  Stack effects may of course be nested since quotations may take other quotations as inputs or produce them as outputs.  Furthermore the `=>` in the stack effect may be followed by <code>&#96;</code> to say that the quotation may raise an exception (directly), and/or followed by `$` to show it performs I/O or alternatively `$[]` inside which you write the names of any functions you're going to call that may perform I/O.
+To represent the type of a quotation there is a special object called a stack effect, represented as `[ => ]`.  Everything to the left of the arrow must represent the state of the stack prior to calling the quotation, and everything to the right represents the state after the quotation has completed.  Any parts of the stack underneath what the quotation touches may be left out, but if it is used it should be included, or must if it is modified.  For example <code>[+]?[&#96;?t t t => t]</code> shows a reasonable type judgement for the addition operator.  To make things shorter you can write `~identifier` to represent a named type parameter as one of the inputs so e.g. `[+]?[~t t => t]` works fine.  On top of this you can use `#identifier` to represent dependent parameters so an example type might be `[~t #n => {t*n}]` for a quotation that replicates a value of type t n times into a stack object.  Stack effects may of course be nested since quotations may take other quotations as inputs or produce them as outputs.  Furthermore the `=>` in the stack effect may be followed by <code>&#96;</code> (that is <code>=>&#96;</code>) to say that the quotation may raise an exception (directly), and/or followed by `$` (that is `=>$`) to show it performs I/O or alternatively `=>$[]` inside which you write the names of any functions you're going to call that may perform I/O.
 
-Within a type stack you are permitted to use `~identifier` to refer to the type of that element within the stack object and use it to copy elsewhere within the type stack e.g. `{~t double t}` is the type of a stack object that contains two objects of the same type with a double inbetween.  Since there is no input or output you can put the binding on either of them (or even both) and it will still work.  However, there is a special type stack called a dependent stack which is created as `{=> }`.  The arrow has to go before any of the dependent arguments but other than that it doesn't really signify anything other than that dependent arguments are allowed and won't get confused with the stack quotation shorhand (you can write `{#x#y#z}` instead of `[#x#y#z {}]`) whose parameters must go to the left of the arrow (and before any actual code as per usual).  The dependent arguments are of course written `#identifier` and this allows you to create types for other elements of the type stack that dependent on program values.  For example <code>{=> #n {&#96;? &#42;n}}</code> represents a pair of a length and a list of that length for some type we don't care about.
+Within a type stack you are permitted to use `~identifier` to refer to the type of that element within the stack object and use it to copy elsewhere within the type stack e.g. `{~t double t}` is the type of a stack object that contains two objects of the same type with a double inbetween.  Since there is no input or output you can put the binding on either of them (or even both) and it will still work.  However, there is a special type stack called a dependent stack which is created as `{=> }`.  The arrow has to go before any of the dependent arguments but other than that it doesn't really signify anything other than that dependent arguments are allowed and won't get confused with the stack quotation shorthand (you can write `{#x#y#z}` instead of `[#x#y#z {}]`) whose parameters must go to the left of the arrow (and before any actual code as per usual).  The dependent arguments are of course written `#identifier` and this allows you to create types for other elements of the type stack that dependent on program values.  For example <code>{=> #n {&#96;? &#42;n}}</code> represents a pair of a length and a list of that length for some type we don't care about.
 
 ## Type casting
 It is possible to do explicit conversions from something to another type using the syntax `.?destination_type`.  This is mostly useful for converting between numerical types without using operators, or more uniquely to do narrowing conversions.  This can be used as a way of stripping unnecessary type tags by doing a cast to one of the supertypes.  In some cases it may be possible to reinterpret the contents of a stack as it would be serialized e.g. turning a `{uint8*}` into a `{float*}` using `.?{float*}` which is useful for interpreting values in memory.
@@ -109,7 +109,7 @@ Starpial has no keywords (though it has words that are defined by default they a
 * `;` - end of statement / indented block
 * `:` - code indented quotations and values
 * `@` - final binding, memory at address
-* `!` - continued binding
+* `!` - continued binding; hard cut
 * `$` - mutable variable binding; cloning
 * `#` - parameter binding; call operator
 * `~` - type parameter binding
@@ -125,7 +125,7 @@ Starpial has no keywords (though it has words that are defined by default they a
 * `[]` - quotation; various special brackets
 * `()` - item quantity assertion; expression
 * `{}` - stack object
-* <code>&#96;</code> - exception
+* <code>&#96;</code> - exception; soft cut
 * `|` - alternation
 * `'` - character
 * `"` - string
@@ -134,7 +134,7 @@ Starpial has no keywords (though it has words that are defined by default they a
 * `^` - no meaning
 
 ## Overloadable operators for arithmetic etc.
-All of these operators can be overloaded by the user for types of their own making, but for standard types they are intrinsically defined.  The non-relational ones come with their form with `=[]` appended built-in to create a modify assignment operator, by applying the operator and then assigning the result e.g. `+=[5]` will increase a value by 5.  The effect of the operator `=[]` contents must be that performing the code and applying the operator just changes the value at the top of the stack and not taking away or adding any items.  Even the unary operations still use the brackets in the built-in form.
+All of these operators can be overloaded by the user for types of their own making, but for standard types they are intrinsically defined.  The non-relational ones come with their form with `=[]` appended built-in to create a modify assignment operator, by applying the operator and then assigning the result e.g. `+=[5]` will increase a value by 5.  The effect of the operator `=[]` contents must be that performing the code and applying the operator just changes the value at the top of the stack and not taking away or adding any items.  Even the unary operations still use the brackets in the built-in form (you would leave them empty).
 ### Arithmetical
 * `-~` - negation
 * `++` - increment
@@ -166,7 +166,7 @@ All of these operators can be overloaded by the user for types of their own maki
 * `<~` - is not implied by
 ### Bit manipulation
 * `<<` - left shift
-* `>>` - arithemtical right shift
+* `>>` - arithmetical right shift
 * `>>>` - logical right shift
 * `<<|` - left rotate
 * `|>>` - right rotate
@@ -178,6 +178,7 @@ The user is not able to overload any of the operators listed in the following se
 ## Special operators
 These operators are not overloadable by the user and have special meanings which cannot be recreated in the language.
 ### Propositional operators
+These are used for propositional logic in the type system (not representable at the program level).
 * `==` - equality
 * `=/=` - inequality
 * `&&` - conjunction
@@ -198,6 +199,7 @@ These operators are not overloadable by the user and have special meanings which
 * `?` - ternary operator
 * `#` - call
 * <code>#&#96;</code> - raise match exception
+* <code>#&#96;&#96;</code>, <code>#&#96;&#96;&#96;</code> etc. - reraise exception triggering current exception handler, one enclosing that etc.
 * `=>` - stack effect / dependent stack
 ### Kleene operators
 * `*` - Kleene operator/star (zero or more)
@@ -232,10 +234,11 @@ Prefixing some selected operators onto identifiers (made up of alphanumerics and
 * `&identifier` - take address of object identifier refers to
 
 ## Special brackets
-Since the prefixing rule does not work with operators (that would turn postfix into prefix) various combinations of operators with various brackets has special meanings completely different from when the brackets are used standalone.  Generally `[]` is used for arbitrary purposes, `()` is used for expressions and `{}` has the more limited usage of pattern matching to a stack object.  Note that `[=>]` and `{=>}` may be used in the same contexts as that for `{}` so they are not listed here (and there is a syntactical ambiguity to avoid with the first of those).  Most sigils work as operators in this way but some don't, specifically `,`, `;`, `:`, `/` (due to its use for regex), `'` and `"` (`_` is treated similarly to a letter so also doesn't count). Here we attempt to enumerate the various types of brackets which currently have meanings (others are considered invalid and reserved for later use):
+Since the prefixing rule does not work with operators (that would turn postfix into prefix) various combinations of operators with various brackets has special meanings completely different from when the brackets are used standalone.  Generally `[]` is used for arbitrary purposes, `()` is used for expressions (generally could use a literal instead of `()` for the following definitions) and `{}` has the more limited usage of pattern matching to a stack object.  Note that `[=>]` and `{=>}` may be used in the same contexts as that for `{}` so they are not listed here (and there is a syntactical ambiguity to avoid with the first of those).  Most sigils work as operators in this way but some don't, specifically `,`, `;`, `:`, `/` (due to its use for regex), `'` and `"` (`_` is treated similarly to a letter so also doesn't count). Here we attempt to enumerate the various types of brackets which currently have meanings (others are considered invalid and reserved for later use):
 * `@[]` - memory (i.e. `{uint8*}`) at the address, or range of addresses (if you give two values) provided
 * `@()` - final bind matching against the value of an expression
 * `@{}` - final bind matching against a stack pattern
+* `![]` - hard cut with match exception handler
 * `!()` - continued bind matching against the value of an expression
 * `!{}` - continued bind matching against a stack pattern
 * `$[]` - cloning stack where everything inside is deep cloned and put onto the outer stack, but any shared references between things inside the cloning stack are kept shared (so it is good to put the entire data structure in there)
@@ -271,7 +274,7 @@ Since the prefixing rule does not work with operators (that would turn postfix i
 * `\()` - reserved for in patterns, something as matching the expression
 * `\{}` - reserved for in patterns, something as matching the stack pattern
 * `.\()` - access field of stack object by key expression, without calling it
-* <code>&#96;[]</code> - match exception handler
+* <code>&#96;[]</code> - match exception handler (soft cut)
 * <code>&#96;()</code> - match exception handler using replacement expression
 * <code>&#96;{}</code> - match exception handler using stack object or stack object quotation shorthand
 * `|[]` - alternative quotation (creates choice point for logical backtracking)
@@ -291,8 +294,8 @@ This is the list of ASCII character tokens and what they mean within a regular e
 * `:` - character class e.g. `:alpha:`
 * `[` - open subprocedure
 * `]` - close subprocedure
-* `@` - bind identifier in scope (final)
-* `!` - bind identifier in scope (continued)
+* `@` - bind identifier in scope
+* `!` - hard cut on previous item (prevents backtracking to try a different match)
 * `^` - start of line
 * `$` - end of line
 * `>` - export identifier
@@ -316,4 +319,4 @@ This is the list of ASCII character tokens and what they mean within a regular e
 * ` ` - ignored whitespace
 * `"` - verbatim text string
 * `'` - characters delimiter (only last character is counted as previous item
-* <code>&#96;</code> - start/end of string, or alternation with cut
+* <code>&#96;</code> - start/end of string, or alternation with (soft) cut

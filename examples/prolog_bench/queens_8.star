@@ -46,7 +46,7 @@ range(M,N,[M|Ns]) :-
 @not_attack:#Xs #X not_attack_aux(Xs, X, 1)
 
 @not_attack_aux::[#{} #_ #_]
-    `:#{Y, Ys..} #X #N
+    !:#{Y, Ys..} #X #N
         X ?(Y N+ =~) !?(Y N- =~)
         not_attack_aux(Ys, X, N 1+)
 
@@ -54,4 +54,4 @@ range(M,N,[M|Ns]) :-
 @select:#{Y, Ys..} #{Y, Zs..} #X select(Ys, Zs, X)
 
 @range::[#N #N #{N}]
-    `:#M #N #{M, Ns..} M N < !? range(M 1+, N, Ns)
+    !:#M #N #{M, Ns..} M N < !? range(M 1+, N, Ns)
