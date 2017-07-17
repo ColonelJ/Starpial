@@ -180,11 +180,11 @@
 @while?[xs.. ~c\[xs.. =>$ ys.. xs.. bool] ~f\[xs.. =>$ zs.. xs..] =>$[c f] ys.. {{zs.., ys..}*} each[..] xs..]:               #c#f c# if_t: f# c f while
 @until?[xs.. ~c\[xs.. =>$ ys.. xs.. bool] ~f\[xs.. =>$ zs.. xs..] =>$[c f] ys.. {{zs.., ys..}*} each[..] xs..]:               #c#f c# if_f: f# c f until
 @untilfail[whilematch] @whilematch?[xs.. ~m\[xs.. =>` qs.. xs..] ~f\[xs.. =>$ rs.. xs..] =>$[f] {{qs.. rs..}*} each[..] xs..]: #m#f [m applied if_t: f# m f whilematch]
-@whilefail[untilmatch] @untilmatch?[xs.. ~m\[xs.. =>` qs.. xs..] ~f\[xs.. =>$ rs.. xs..] =>$[f] {{qs.. rs..}*} each[..] xs..]: #m#f [m#]`_[f# m f untilmatch]
+@whilefail[untilmatch] @untilmatch?[xs.. ~m\[xs.. =>` qs.. xs..] ~f\[xs.. =>$ rs.. xs..] =>$[f] {{qs.. rs..}*} each[..] xs..]: #m#f [m#]`*[f# m f untilmatch]
 @dowhile?[xs.. ~f\[xs.. => ys.. xs.. bool] => {ys+ xs} each[..]]:                 #f f# if_t: f dowhile
 @dountil?[xs.. ~f\[xs.. => ys.. xs.. bool] => {ys+ xs} each[..]]:                 #f f# if_f: f dountil
-@dountilfail[dowhilematch] @dowhilematch?[TODO]:#f [f# f dowhilematch]`[]#
-@dowhilefail[dountilmatch] @dountilmatch?[TODO]:#f [f#]`_[f dountilmatch]#
+@dountilfail[dowhilematch] @dowhilematch?[TODO]:#f [f# f dowhilematch]`*[]#
+@dowhilefail[dountilmatch] @dountilmatch?[TODO]:#f [f#]`*[f dountilmatch]#
 @fix?[xs.. ~f\[xs.. [xs.. =>$[f] ys..] =>$ ys..] =>$[f] ys..]:                            #f f[f fix]#
 @times?[xs.. #n?uint ~f\[xs.. =>$ ys.. xs..] =>$[f] n times[ys..] xs..]:#n#f n 0 > if_t: f# n 1 - times(f)
 
@@ -226,12 +226,12 @@
 @dountilfound?[xs.. {t*} ~f\[xs.. t =>$ ys.. xs.. bool] =>$[f] {ys* xs} each[..]]:    [#{x xs..}#p x p# if_f: xs p dountilfound]`[#_#_]#
 
 @unify?[~t t =>`]: #x #x 
-@applied?[xs.. ~t\[xs.. =>` ys..] => [xs..]|[ys..]# bool]:#f [f# true]`_[false]#
-@applies?[xs.. ~t\[xs.. =>` ys..] => xs.. bool]:#f [failneg[f#] false]`[true]#
-@failneg?[xs.. ~t\[xs.. =>` ys..] =>` xs..]:#f @`pass @`fail [f`_[#`fail]# #`pass]`fail[]`pass[#`]#
-@proveifthen?[xs.. ~a\[xs.. =>` ys..] ~c\[ys.. =>` zs..] =>` xs..]: #a #c failneg[a# failneg[c#]]
+@applied?[xs.. ~t\[xs.. =>` ys..] => [xs..]|[ys..]# bool]:#f [f# true]`*[false]#
+@applies?[xs.. ~t\[xs.. =>` ys..] => xs.. bool]:#f [disprove(f) false]`[true]#
+@disprove?[xs.. ~t\[xs.. =>` ys..] =>` xs..]:#f !`pass !`fail [f`*[#`fail]!# #`pass]`fail[]`pass[#`]#
+@proveifthen?[xs.. ~a\[xs.. =>` ys..] ~c\[ys.. =>` zs..] =>` xs..]: #a #c disprove[a# disprove(c)]
 @proveiff?[`@xs xs.. [xs.. =>` xs..]*2 =>` xs..]: #f #g proveifthen(f,g) proveifthen(g,f)
-@findall?[xs.. ~f\[xs.. => ys.. t] =>$[f] xs.. {t*}]:#f $xs::{}; [xs =: f# xs pushb; .> #`]`_[]# xs#  ?\N.B. syncpoint required otherwise the store transaction may be cancelled!
+@findall?[xs.. ~f\[xs.. => ys.. t] =>$[f] xs.. {t*}]:#f $xs::{}; [xs =: f# xs pushb; .> #`]`*[]# xs#  ?\N.B. syncpoint required otherwise the store transaction may be cancelled!
 
 @solo?[~t => {t}]:             #a {a}
 @duo?[~a ~b => {a b}]:        #a#b {a b}
