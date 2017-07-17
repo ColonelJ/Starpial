@@ -51,6 +51,7 @@
 
 @_!!_?[~t => t]: ![#`]
 @_!#_?[xs.. ~f\[xs.. =>$ ys..] =>$[f] ys..]: ![#`]#
+@_!*#_?[xs.. ~f\[xs.. =>$ ys..] =>$[f] ys..]: !*[#`]#
 
 [show]!?[`@ => //]
 [=]!?[`@ `@ => bool]
@@ -228,7 +229,7 @@
 @unify?[~t t =>`]: #x #x 
 @applied?[xs.. ~t\[xs.. =>` ys..] => [xs..]|[ys..]# bool]:#f [f# true]`*[false]#
 @applies?[xs.. ~t\[xs.. =>` ys..] => xs.. bool]:#f [disprove(f) false]`[true]#
-@disprove?[xs.. ~t\[xs.. =>` ys..] =>` xs..]:#f !`pass !`fail [f`*[#`fail]!# #`pass]`fail[]`pass[#`]#
+@disprove?[xs.. ~t\[xs.. =>` ys..] =>` xs..]:#f !`fail [f!*# #`fail]`[]`fail[#`]#
 @proveifthen?[xs.. ~a\[xs.. =>` ys..] ~c\[ys.. =>` zs..] =>` xs..]: #a #c disprove[a# disprove(c)]
 @proveiff?[`@xs xs.. [xs.. =>` xs..]*2 =>` xs..]: #f #g proveifthen(f,g) proveifthen(g,f)
 @findall?[xs.. ~f\[xs.. => ys.. t] =>$[f] xs.. {t*}]:#f $xs::{}; [xs =: f# xs pushb; .> #`]`*[]# xs#  ?\N.B. syncpoint required otherwise the store transaction may be cancelled!

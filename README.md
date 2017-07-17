@@ -198,6 +198,9 @@ These are used for propositional logic in the type system (not representable at 
 * `...` - spill no comma assertion
 * `?` - ternary operator
 * `#` - call
+* `$` - create variable reference from value
+* `!*` - import all bindings from outer stack before current point
+* `@*` - import all bindings from outer stack before current point, closing off partial defines
 * <code>&#96;</code> - add match exception handler
 * <code>&#96;&#42;</code> - add last resort exception handler
 * <code>#&#96;</code> - raise match exception
@@ -241,17 +244,22 @@ Since the prefixing rule does not work with operators (that would turn postfix i
 * `@[]` - memory (i.e. `{uint8*}`) at the address, or range of addresses (if you give two values) provided
 * `@()` - final bind matching against the value of an expression
 * `@{}` - final bind matching against a stack pattern
+* `@*()` - drop expression number of items from the stack (same as `!*()`)
 * `![]` - hard cut with match exception handler
 * `!()` - continued bind matching against the value of an expression
 * `!{}` - continued bind matching against a stack pattern
+* `!*[]` - hard cut with last resort exception handler
+* `!*()` - drop expression number of items from the stack
 * `$[]` - cloning stack where everything inside is deep cloned and put onto the outer stack, but any shared references between things inside the cloning stack are kept shared (so it is good to put the entire data structure in there)
 * `$()` - variable bind matching against the value of an expression
 * `${}` - variable bind matching against a stack pattern
+* `$*()` - create expression number of variables with starting value
 * `#[]` - matches against any value produced within the stack e.g. you can match ASCII characters with `#['abcABC']`
 * `#()` - match against the value of an expression
 * `#{}` - match against a stack pattern
 * `#$()` - match a reference to a reference computed by the expression
 * `#${}` - match to elements of a stack pattern by reference
+* `#*()` - perform call (`#`) expression number of times
 * `~()` - match against the type computed by the expression
 * `~{}` - match against a type stack pattern
 * `<[]` - index into a stack object some number of objects from the top (and repeat for each index given)
@@ -267,6 +275,7 @@ Since the prefixing rule does not work with operators (that would turn postfix i
 * `?[]` - type quotation that produces a type
 * `?()` - assertion on a value
 * `?{}` - type stack
+* `?*()` - perform `?` expression number of times
 * `*?()` - Kleene operator, up to evaluated expression times whatever is on the stack
 * `*()` - Kleene operator, exactly evaluated expression times whatever is on the stack
 * `+()` - Kleene operator, at least evaluated expression times whatever is on the stack
