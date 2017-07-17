@@ -316,7 +316,7 @@
 
 @dictadd?[~d #k ~v => d dictadd(k,v)]:#d#k#v {d<*> v>(k)}
 @dictget?[~d #k => d dictget(k)]:#k .\(k)
-@dicthas?[~d `? => bool]:#d#k [d.\(k)] applies
+@dicthas?[~d `? => bool]:[#{_>(k)}#k true]`[#_#_ false]#
 @dictremove?[~d #k => d dictremove(k)]:#d#k {d<*> {}>!(k)}
 @dictkeys?[~d => dictkeys(d) map[`?t #?t t]]:#d findall[`@k d.\(k) k]
 @dictvalues?[~d => dictvalues(d)]:#d findall[`@k d.\(k)]
