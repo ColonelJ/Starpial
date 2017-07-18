@@ -1,4 +1,4 @@
-??rank?{>index::int; >show:://}?int
+??rank?{>index::int; >show::string}?int
    [Rank]!?[int|char => rank]
    !Rank:#1|14 {12>index "A">show 14 <*>}
    !Rank:#n?int?(2>=)?(9<=) {(n 2 -)>index (n show)>show n <*>}

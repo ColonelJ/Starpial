@@ -3,7 +3,7 @@
 @board:: readBoard parseBoard
 @parseBoard:#/"[" [parseRow]>first ("," [parseRow]>rest)%3% "]"/ {first, rest...}
 @parseRow:#/"[" [parseNum]>first ("," [parseNum]>rest)%3% "]"/ {first, rest...}
-@parseNum:#/0-9+>digits/ Int.parse(digits)?(0 >=)?(16 <)
+@parseNum:#/0-9+'>digits/ Int.parse(digits)?(0 >=)?(16 <)
 @best:: ChoiceNode(board) iterations times[dup.MCTS!] .moves findmax:.runs
 movemap map[#{k,m} {k, m(board)#}] findmatch[#{_ (best.board)}] writeMove(head)
 

@@ -22,9 +22,9 @@ Pattern matching is typically achieved on parameters using `#` notation e.g. `#5
 
 Within a pattern, you have use of the Kleene operators `*` (zero or more) `+` (one or more) `?` (one or none).  These can also be followed by numbers `*3` (exactly three) `+3` (at least three) `*?3` (up to three, can't use ?3 since that means the type of all integers with value 3 - see later).  Additionally you can combine some of these e.g. `+10?99` means between 10 and 99 times inclusive.  These may be used in other contexts, but particularly, in types, you can use them as is, and the program level operators have to be written as `_*_` `_+_` and `_?_` since they are uncommon there.  Note that `+?3` means between one and three, and `*?3` means between zero and three, i.e. the same as what `?3` would mean if it was allowed.
 
-For character strings you can use `#//` which is a regular expression matcher.  If it is empty for example, it will match any (valid) string.  Starpial uses its own unique syntax for regular expressions which is described in a later section.
+For character strings (and also general token sequences) you can use `#//` which is a regular expression matcher.  If it is empty for example, it will match any sequence i.e. it is equivalent to `#{_*}`.  Starpial uses its own unique syntax for regular expressions which is described in a later section.
 
-When a pattern doesn't match it triggers a 'match exception', a special soft exception that can be handled using <code>&#96;[]</code> and also triggers backtracking when doing logic programming (with any exception the state of the stack is rolled back to the point a different alternate execution path can be tried).  (Since the <code>&#96;[]</code> form implies a (soft) logical cut on the quotation it applies to you may sometimes prefer `|[]` which creates full logical alternatives providing more places to backtrack to.  There is also `![]` which is a hard cut, disabling all backtracking into the quotation it is applied to once its end has been successfully reached once.)  You can therefore create a case switch with code like <code>[#1 code]&#96;[#2 code]&#96;[#3 code]#</code>.
+When a pattern doesn't match it triggers a 'match exception', a special soft exception that can be handled using <code>&#96;[]</code> and also triggers backtracking when doing logic programming (with any exception the state of the stack is rolled back to the point a different alternate execution path can be tried).  (Since the <code>&#96;[]</code> form implies a (soft) logical cut on the quotation it applies to you may sometimes prefer `|[]` which creates full logical alternatives providing more places to backtrack to (or such alternatives may be processed in parallel).  There is also `![]` which is a hard cut, disabling all backtracking into the quotation it is applied to, once its end has been successfully reached once.)  You can therefore create a case switch with code like <code>[#1 code]&#96;[#2 code]&#96;[#3 code]#</code>.
 
 You are not limited to using `#{pattern}`, you can also bind patterns using `@{pattern}` `!{pattern}` and `${pattern}`.
 
@@ -55,7 +55,7 @@ For type aliases, which are written as `??identifier?[]` you are allowed to incl
 
 To create a closed type tag you write `?!identifier` (which may be refined using `?[]` or `??identifier` later) and then at the single point of definition in the program for a value under that type tag you tag it with `?@identifier` (this can only be used once wherever `?!identifier` is in scope!)  Note that by non-determinism you can assign a set of different possible values into a closed type tag.
 
-For most of the fundamental type tags you should use the built-in type tags described previously.  When inside types you can use `//` directly as the type of a string (since it matches all of them), or any more complex regex to describe a subset of strings (if you need divide you have to use `_/_`).  The interesting case is stack objects.  For tuple types you simply write the types inside the `{}` e.g. `{int, double}` (comma optional).  For lists you have to make use of the Kleene operators mentioned previously e.g. `{int+}` is a non-empty list of ints.  The patterns for the inside of a stack object can be as complicated as you want, and might make use of type parameters or program functions to build the stack of types.  N.B. `{char*}` can represent a string similarly to `//`, but only the latter maintains an invariant that the string is a well-formed sequence of UTF-8 characters, and so it should be preferred.
+For most of the fundamental type tags you should use the built-in type tags described previously.  When inside types you can use <code>/&#96;.&#42;&#96;/</code> directly as the type of any valid string (since it matches all of them), or any more complex regex to describe a subset of strings (if you need divide you have to use `_/_`).  The interesting case is stack objects.  For tuple types you simply write the types inside the `{}` e.g. `{int, double}` (comma optional).  For lists you have to make use of the Kleene operators mentioned previously e.g. `{int+}` is a non-empty list of ints.  The patterns for the inside of a stack object can be as complicated as you want, and might make use of type parameters or program functions to build the stack of types.  N.B. `{char*}` can represent a string similarly to <code>/&#96;.&#42;&#96;/</code>, but only the latter maintains an invariant that the string is a well-formed sequence of UTF-8 characters (by definition of `.` within a regex), and so it should be preferred.
 
 To represent the interface of an object/class you simply create a type stack and export from it the same names as the object you're trying to represent, but instead of what was originally exported, you export the values of the types which represent those exported things.
 
@@ -298,40 +298,43 @@ Since the prefixing rule does not work with operators (that would turn postfix i
 * `&[]` - takes memory addresses of any provided objects
 
 ## Regular Expressions
-Regular expressions in Starpial are designed to work with Unicode characters (represented by UTF-8 octets) so using a regular expression will also validate that the sequence of octets passed to it is a valid UTF-8 representation.
+Regular expressions in Starpial are designed to work with Unicode characters (represented by UTF-8 octets) but are equally capable of parsing arbitrary token sequences, so using a regular expression in itself does not guarantee that a sequence of octets passed to it is valid UTF-8 text string.  However the text-specific constructs provided make it easy to represent a grammar that only accepts valid UTF-8 sequences.  To accept arbitrary tokens (which may be raw UTF-8 octets) you need to use `_` (which matches any token), `{}` (which matches an arbitrary token sequence) or `[]` (which calls into another parser).  N.B. the contents of `{}` are parsed similarly to as in types, where the Kleene operators override the normal operators; that is obviously more useful in this context!
 
-Regular expressions in Starpial can be made recursive by calling other code within the regex that matches against part of the string (and can output an object).  This is done using `[sub_parse]` within the regular expression and then you can export the value produced using `>identifier` immediately after it (spaces are ignored in these regular expressions).
+Regular expressions in Starpial can be made recursive by calling other code (parsers) within the regex; these will match against part of the sequence, perhaps using another regular expression (hence the name).  Such subprocedures can only take in the sequence to match as input (that is effectively every possible prefix of the remaining sequence), and may output one or multiple objects as output from parsing (or nothing at all).  The calls to other parsers are done by writing `[sub_parse]` within the regular expression and then you can export any values produced by writing `>identifier` after it (spaces are allowed between them, since these are ignored in regular expressions).  Using groups (represented by `()`) you can collect multiple parse results together if desired and export them together, or if you want the actual sequence that was matched you can use the `'` operator to retrieve it.  Also, for each Kleene operator an `>identifier` is enclosed in, the parse result becomes a list of the individual results (so you get the result of every parse done).
 
-This is the list of ASCII character tokens and what they mean within a regular expression (again underscore is ignored, it just represents itself like a letter):
-* `.` - any char
+Note that operator precedence does not feature much in Starpial, but for regular expressions, postfix operators happen in order (left to right) and binary infix operators `|`, `&` and <code>&#96;</code> are also done left to right, but have higher precedence than the postfix ones.  Note that the binary operators only apply to the items that immediately precede and follow them, so you should write `"alpha"|"beta"` (grouping the characters together), not `alpha|beta` (that will match `"alphbeta"`).  N.B. generally you will use parentheses to group together more complex items together as one, so `(alpha)|(beta)` also works, but the string literal syntax allows you to write a lot more characters into the regex without escaping them with `\` and is more clear for plain strings.
+
+This is the list of ASCII character tokens and what they mean within a regular expression:
+* `.` - any Unicode character (represented as a sequence of UTF-8 octets)
 * `,` - break identifiers from text whilst keeping the last item as current
-* `;` - null string (can also be used to break identifiers from text)
-* `:` - character class e.g. `:alpha:`
-* `[` - open subprocedure
+* `;` - null sequence (can also be used to break identifiers from text, but is an item of its own)
+* `:` - character class e.g. `:alpha:`, `:alpha~:` for Unicode characters not matching, similarly `:"adfgkx":` and `:"abc"~:`
+* `[` - open subprocedure (i.e. another parser)
 * `]` - close subprocedure
 * `@` - bind identifier in scope
 * `!` - hard cut on previous item (prevents backtracking to try a different match)
 * `^` - start of line
 * `$` - end of line
-* `>` - export identifier
-* `<` - rollback string consumed by previous item (but keeps bindings)
+* `>` - export identifier (includes other bindings as backtracking options)
+* `<` - rollback sequence consumed by previous item (but keeps bindings)
 * `=` - assign to variable
 * `/` - regex terminator
 * `\` - escape char
 * `~` - no match on previous item (inverts failure)
-* `*` - zero or more
-* `?` - one or none
-* `+` - one or more
-* `-` - make range
-* `%` - count delimiter e.g. `%3%` `%5+%` `%3-10%`
+* `-` - make range e.g. `0-9`
+* `*` - Kleene zero or more
+* `?` - Kleene one or none
+* `+` - Kleene one or more
+* `%` - Kleene count delimiter e.g. `%3%` `%5+%` `%3-10%`
 * `#` - comment delimiter
-* `|` - alternation
-* `&` - conjunction
-* `(` - open capture group
-* `)` - close capture group
-* `{` - open character options, uses `~` to invert e.g. `{adfgkx}` `{12345~}` `{a-zA-Z0-9_}`
+* `|` - alternation of previous item with next item
+* `&` - conjunction (has to parse exactly the same sequence in all cases)
+* `(` - open group
+* `)` - close group
+* `{` - open sequence (for matching arbitrary tokens rather than characters)
 * `}` - close character options
+* `_` - (when not part of an identifier) any item (UTF-8 octet or other arbitrary token)
 * ` ` - ignored whitespace
-* `"` - verbatim text string
-* `'` - characters delimiter (only last character is counted as previous item
-* <code>&#96;</code> - start/end of string, or alternation with (soft) cut
+* `"` - verbatim text string (i.e. a sequence of characters)
+* `'` - get the sequence that was matched by the previous item (instead of the parsed objects)
+* <code>&#96;</code> - start/end of sequence, or alternation with (soft) cut (if not at start/end of regex)
