@@ -25,8 +25,8 @@ axiom-of-choice {A} {B} {C} z = f , g
 <<<?
 
 ?\ Definition of Existential type
-?@exists?[`?A?set #B?[A => set] {#x?A => (B(x))}]
-@Exists:`?A `@B #x?A #y?[B(x)] {x, y}?![exists[#x?A B(x)]]
+?!exists?[`?A?set #B?[A => set] {=> #x?A (B(x))}]
+@Exists:`?A `@B #x?A #y?[B(x)] {x, y}?@[exists[#x?A B(x)]]
 
 ?\ Left projection
 @p?[`?A `@B exists[#x?A B(x)] => A]:#{x, y} x

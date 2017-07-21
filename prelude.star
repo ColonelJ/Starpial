@@ -68,8 +68,8 @@
 !show?[_ => string]:{#{x xs..} '{' show(x).. xs each[',' swap show..] '}'}`{#_ '{}'}
 
 
-??maybe?@none?{#_}?@some?{#t t} @None:{}?![none(`?)]; @Some:`?t #x?t {x}?![some(t)]
-??either?@left?{#l#r l}?@right?{#l#r r} @Left:`?t #x?t {x}?![either(t, `?)]; @Right:`?t #x?t {x}?![either(`?, t)]
+??maybe?!none?{#_}?!some?{#t t} @None:{}?@[none(`?)]; @Some:`?t #x?t {x}?@[some(t)]
+??either?!left?{#l#r l}?!right?{#l#r r} @Left:`?t #x?t {x}?@[left(t, `?)]; @Right:`?t #x?t {x}?@[right(`?, t)]
 
 
 @true?[bool]:                          0 0 =

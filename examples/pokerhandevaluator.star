@@ -18,13 +18,13 @@
    !Suit[#2 'd'?suit] @Diamond['d'?suit]  @Diamonds:#n Card(n Rank,Diamond)
    !Suit[#3 'h'?suit] @Heart['h'?suit]    @Hearts:#n Card(n Rank,Heart)
    @Suit[#4 's'?suit] @Spade['s'?suit]    @Spades:#n Card(n Rank,Spade)
-?@card
-   @Card:#r?rank #s?suit {r r>rank s s>suit >show:{'[' r.show.. s ']'}}?!card
+?!card
+   @Card:#r?rank #s?suit {r r>rank s s>suit >show:{'[' r.show.. s ']'}}?@card
    !_>_: #c?card #d?card c.rank d.rank >
    !_<_: #c?card #d?card c.rank d.rank <
    !_=_: #c?card #d?card c.rank d.rank =
 ??handrepr?{{card*5} >kickers::{card*?5}}
-??hand?handrepr?@straight|flush|straightflush|fullhouse|quads|trips|twopair|pair|hicard
+??hand?handrepr?!straight|flush|straightflush|fullhouse|quads|trips|twopair|pair|hicard
    [.kickers]!?[hand => {rank*}]
    @sametype:#?straightflush#?straightflush
    @sametype:#?quads#?quads
@@ -60,29 +60,29 @@
       @flushsets:: cards splitsuits filter[length 5 >=] 
       
        :    
-         flushsets [makestraight?!straightflush]`[] map max
+         flushsets [makestraight?@straightflush]`[] map max
       `:
          @quad:: 4 takebestset; @kicker:: 1 takebestset
-         {pickcards{4 times[quad] kicker}  >kickers{quad,kicker}}?!quads
+         {pickcards{4 times[quad] kicker}  >kickers{quad,kicker}}?@quads
       `:
          @triple:: 3 takebestset; @pair:: 2 takebestset
-         {pickcards{3 times[triple] pair pair} >kickers{triple,pair}}?!fullhouse
+         {pickcards{3 times[triple] pair pair} >kickers{triple,pair}}?@fullhouse
       `:    
-         flushsets [makeflush?!flush] map max
+         flushsets [makeflush?@flush] map max
       `:    
-         cards makestraight?!straight
+         cards makestraight?@straight
       `:
          @triple:: 3 takebestset; @kicker2:: 2 takekickers 
-         {pickcards{3 times[triple] kicker2..} >kickers{triple,kicker2..}}?!trips
+         {pickcards{3 times[triple] kicker2..} >kickers{triple,kicker2..}}?@trips
       `:
          @pairA:: 2 takebestset; @pairB:: 2 takebestset; @kicker:: 1 takebestset 
-         {pickcards{pairA pairA pairB pairB kicker} >kickers{pairA,pairB,kicker}}?!twopair
+         {pickcards{pairA pairA pairB pairB kicker} >kickers{pairA,pairB,kicker}}?@twopair
       `:
          @pair:: 2 takebestset; @kicker3:: 3 takekickers 
-         {pickcards{pair pair kicker3..} >kickers{pair,kicker3..}}?!pair
+         {pickcards{pair pair kicker3..} >kickers{pair,kicker3..}}?@pair
       `:
          @kicker5:: 5 takekickers 
-         {pickcards(kickers) >kickers::kicker5}?!hicard
+         {pickcards(kickers) >kickers::kicker5}?@hicard
       #
       !takekickers?[int => {rank*}]:#n {n times:1 takebestset}
       !takebestset?[int => rank]: #n?int
